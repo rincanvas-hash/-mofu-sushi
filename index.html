@@ -54,7 +54,22 @@
   .row{ display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap; }
   .best{ margin:8px 0 10px; font-size:22px; color:#7a4e33; background:rgba(255,255,255,.75); padding:8px 22px; border-radius:999px; box-shadow:0 2px 6px rgba(0,0,0,.08); display:flex; align-items:center; gap:10px; }
   .best img{ width:28px; height:28px; }
-  .icons{ position:absolute; bottom:22px; left:0; right:0; display:flex; justify-content:center; gap:14px; }
+  .icons{ display:flex; justify-content:center; gap:14px; margin-top:22px; }
+  /* 縦が短い画面(PCなど): 全体を詰める */
+  #stage.short #title h1{ font-size:34px; }
+  #stage.short #title h1 small{ font-size:12px; margin-top:2px; }
+  #stage.short .mofu-hero{ width:150px; height:160px; margin:8px 0 0; }
+  #stage.short .mofu-hero img.m{ width:150px; }
+  #stage.short .mofu-hero img.p{ width:68px; left:41px; }
+  #stage.short .season{ font-size:14px; padding:4px 12px 4px 6px; margin:2px 0 4px; }
+  #stage.short .season img{ width:34px; height:34px; }
+  #stage.short .best{ font-size:18px; padding:5px 18px; margin:4px 0 6px; }
+  #stage.short .mhead{ margin-bottom:4px; }
+  #stage.short .mstrip{ margin-bottom:10px; }
+  #stage.short .mcell{ width:100px; font-size:14px; padding:4px 4px 3px; }
+  #stage.short .mcell .ic{ height:32px; } #stage.short .mcell img{ width:32px; height:32px; }
+  #stage.short .btn{ font-size:24px; padding:10px 40px; }
+  #stage.short .icons{ margin-top:14px; gap:10px; } #stage.short .icon{ width:46px; height:46px; font-size:22px; }
   .icon{ width:54px; height:54px; border-radius:50%; background:#fff; border:none; font-size:26px; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,.14); display:flex; align-items:center; justify-content:center; text-decoration:none; color:inherit; }
   .icon:active{ transform:scale(.94); }
 
@@ -284,6 +299,7 @@ function fit(){
   // 画面の縦横比に合わせて論理高さを決める(スマホの上下黒帯をなくす)
   H = Math.round(Math.max(760, Math.min(1080, W * innerHeight / innerWidth))); FLOOR_Y = H - 14;
   stage.style.width = W + 'px'; stage.style.height = H + 'px';
+  stage.classList.toggle('short', H < 860);
   const s = Math.min(innerWidth / W, innerHeight / H);
   stage.style.transform = `translate(-50%,-50%) scale(${s})`;
   const dpr = Math.min(devicePixelRatio || 1, 2.5);
