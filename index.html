@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#f7d9c4">
+<title>もふもふ寿司キャッチ</title>
+<meta property="og:title" content="もふもふ寿司キャッチ">
+<meta property="og:description" content="落ちてくるお寿司をキャッチ！モフの頭にお皿が積み上がる60秒ゲーム">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rincanvas-hash.github.io/-mofu-sushi/">
+<meta property="og:image" content="https://rincanvas-hash.github.io/-mofu-sushi/assets/ogp.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="もふもふ寿司キャッチ">
+<meta name="twitter:description" content="落ちてくるお寿司をキャッチ！モフの頭にお皿が積み上がる60秒ゲーム">
+<meta name="twitter:image" content="https://rincanvas-hash.github.io/-mofu-sushi/assets/ogp.jpg">
+<link rel="icon" href="assets/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icon-180.png">
+<style>
+  :root{
+    --cream:#fff7ee; --peach:#f7d9c4; --wood:#c98a5b; --wood-d:#8d5a34;
+    --ink:#4a3628; --pink:#f08aa6; --gold:#e5b53a; --red:#d8443b;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; height:100%; background:#3b2a20; overflow:hidden; font-family:"Hiragino Maru Gothic ProN","Yu Gothic UI","Rounded Mplus 1c","Segoe UI",system-ui,sans-serif; color:var(--ink); }
+  body{ position:fixed; inset:0; touch-action:none; user-select:none; -webkit-user-select:none; }
+  #stage{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:480px; height:800px; transform-origin:center; overflow:hidden; background:var(--cream); border-radius:0; }
+  canvas{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+
+  /* ---------- overlays ---------- */
+  .ov{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+  .hidden{ display:none !important; }
+
+  /* title */
+  #title{ background:
+      radial-gradient(circle at 50% 22%, #ffffff 0, #fff3e6 32%, transparent 60%),
+      linear-gradient(#ffe7d2 0%, #f7d9c4 60%, #e9c3a3 100%); }
+  #title h1{ margin:0; font-size:44px; line-height:1.15; letter-spacing:.02em; color:#5a3a26; text-shadow:0 3px 0 #fff, 0 6px 14px rgba(120,70,30,.25); }
+  #title h1 small{ display:block; font-size:15px; letter-spacing:.35em; color:#b5785a; margin-top:6px; font-weight:400; }
+  .mofu-hero{ position:relative; width:200px; height:214px; margin:18px 0 2px; }
+  .mofu-hero img.m{ position:absolute; left:0; bottom:0; width:200px; animation:bob 2.4s ease-in-out infinite; }
+  .mofu-hero img.p{ position:absolute; width:90px; left:55px; animation:bob 2.4s ease-in-out infinite; filter:drop-shadow(0 3px 3px rgba(0,0,0,.18)); }
+  @keyframes bob{ 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-6px);} }
+  .btn{ appearance:none; border:none; cursor:pointer; font-family:inherit; color:#fff; background:linear-gradient(#ff9fb9,#f06a90); border-radius:999px; box-shadow:0 6px 0 #c94f72, 0 10px 18px rgba(0,0,0,.18); font-size:30px; font-weight:700; padding:14px 52px; transition:transform .08s, box-shadow .08s; }
+  .btn:active{ transform:translateY(4px); box-shadow:0 2px 0 #c94f72, 0 4px 8px rgba(0,0,0,.18); }
+  .btn.small{ font-size:20px; padding:10px 26px; }
+  .btn.ghost{ background:#fff; color:#b5785a; box-shadow:0 4px 0 #d9b39a, 0 8px 14px rgba(0,0,0,.12); }
+  .btn.ghost:active{ box-shadow:0 1px 0 #d9b39a; }
+  .row{ display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap; }
+  .best{ margin:8px 0 10px; font-size:22px; color:#7a4e33; background:rgba(255,255,255,.75); padding:8px 22px; border-radius:999px; box-shadow:0 2px 6px rgba(0,0,0,.08); display:flex; align-items:center; gap:10px; }
+  .best img{ width:28px; height:28px; }
+  .icons{ position:absolute; bottom:22px; left:0; right:0; display:flex; justify-content:center; gap:14px; }
+  .icon{ width:54px; height:54px; border-radius:50%; background:#fff; border:none; font-size:26px; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,.14); display:flex; align-items:center; justify-content:center; text-decoration:none; color:inherit; }
+  .icon:active{ transform:scale(.94); }
+
+  /* modal */
+  #help{ background:rgba(60,35,20,.55); backdrop-filter:blur(3px); }
+  .card{ background:#fff; border-radius:24px; padding:22px 20px 18px; width:400px; max-height:720px; overflow:auto; box-shadow:0 20px 40px rgba(0,0,0,.3); }
+  .card h2{ margin:0 0 12px; font-size:24px; color:#5a3a26; }
+  .hrow{ display:grid; grid-template-columns:70px 40px 70px 1fr; align-items:center; gap:6px; padding:8px 4px; border-bottom:1px dashed #f0d9c8; font-size:22px; font-weight:700; }
+  .hrow:last-of-type{ border-bottom:none; }
+  .hrow img{ width:64px; height:64px; object-fit:contain; }
+  .hrow .arrow{ color:#c98a5b; font-size:26px; }
+  .hrow .val{ text-align:left; font-size:22px; }
+  .hrow .val.w{ color:#7a7a7a;} .hrow .val.r{ color:var(--red);} .hrow .val.g{ color:#c3921a;}
+  .hrow .val.bad{ color:#8a5a3a; font-size:20px; }
+  .hnote{ font-size:15px; color:#8a6a55; margin:10px 0 4px; line-height:1.6; }
+  .hstack{ position:relative; width:64px; height:64px; }
+  .hstack img{ position:absolute; left:0; width:64px; height:64px; }
+  .hstack img.pl{ width:40px; height:auto; left:12px; }
+
+  /* result */
+  #result{ background:#fbe9ec; }
+  #result .bg{ position:absolute; left:0; top:0; width:100%; height:480px; background:url(assets/ate.jpg) center top/100% auto no-repeat; }
+  #result .bg::after{ content:""; position:absolute; inset:0; background:linear-gradient(180deg, rgba(251,233,236,0) 62%, rgba(251,233,236,.85) 88%, #fbe9ec 100%); }
+  .rwrap{ position:absolute; left:0; right:0; top:300px; bottom:0; display:flex; overflow-y:auto; overflow-x:hidden; touch-action:pan-y; -webkit-overflow-scrolling:touch; padding:12px 0 18px; }
+  .receipt{ position:relative; width:380px; margin:auto; flex-shrink:0; background:#fff; border-radius:22px; padding:14px 18px 12px; box-shadow:0 14px 30px rgba(120,60,60,.18); animation:pop .5s cubic-bezier(.2,1.5,.4,1) both; }
+  @keyframes pop{ from{ transform:scale(.6); opacity:0;} to{ transform:scale(1); opacity:1;} }
+  .receipt .total{ font-size:46px; font-weight:800; color:#5a3a26; line-height:1; margin:2px 0 8px; letter-spacing:.02em; }
+  .receipt .total span{ font-size:30px; margin-right:6px; }
+  .plates{ display:flex; justify-content:center; gap:14px; font-size:20px; font-weight:700; color:#7a4e33; margin-bottom:4px; }
+  .plates div{ display:flex; align-items:center; gap:5px; }
+  .plates img{ width:40px; height:auto; }
+  .plates .bonus{ color:#e0a020; }
+  .medalrow{ display:flex; align-items:center; justify-content:center; gap:14px; min-height:64px; margin-bottom:6px; }
+  .medalrow img{ width:52px; height:52px; animation:pop .6s cubic-bezier(.2,1.5,.4,1) both .35s; }
+  .medalrow .nb{ font-size:20px; color:#c94f72; font-weight:800; animation:pop .5s both .5s; }
+  .bestline{ font-size:16px; color:#9a7a65; margin-bottom:8px; }
+  #result .row{ margin-top:4px; }
+
+  /* missions / stamps / zukan */
+  .mhead{ font-size:14px; color:#9a7a65; letter-spacing:.2em; margin-bottom:6px; }
+  .mstrip{ display:flex; gap:8px; justify-content:center; margin:0 0 14px; }
+  .mcell{ width:112px; background:rgba(255,255,255,.85); border-radius:16px; padding:6px 4px 4px; display:flex; flex-direction:column; align-items:center; gap:2px; font-size:16px; font-weight:700; color:#7a4e33; box-shadow:0 2px 6px rgba(0,0,0,.08); position:relative; }
+  .mcell .ic{ position:relative; height:40px; display:flex; align-items:center; justify-content:center; }
+  .mcell img{ width:40px; height:40px; object-fit:contain; }
+  .mcell img.pl{ height:auto; }
+  .mcell .ban{ position:absolute; font-size:30px; opacity:.9; }
+  .mcell.done{ background:#dff5e3; color:#2f8a4a; }
+  .mcell.done::after{ content:"✓"; position:absolute; right:7px; top:2px; font-size:16px; color:#2f8a4a; }
+  .mcell.fail{ opacity:.5; }
+  .stamps{ display:flex; gap:8px; justify-content:center; margin:12px 0 6px; }
+  .stamp{ width:44px; height:44px; border-radius:50%; border:2px dashed #e0b8a0; display:flex; align-items:center; justify-content:center; font-size:22px; background:#fff; position:relative; }
+  .stamp.on{ border-style:solid; border-color:#f06a90; background:#ffe3ec; }
+  .stamp .st{ position:absolute; top:-10px; right:-8px; font-size:14px; }
+  .stamp.today{ box-shadow:0 0 0 3px #ffd54a; }
+  .zgrid{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:6px; }
+  .zcell{ background:#fff7ee; border-radius:14px; padding:6px 2px 4px; display:flex; flex-direction:column; align-items:center; font-size:14px; color:#7a4e33; font-weight:700; position:relative; }
+  .zcell img{ width:64px; height:64px; object-fit:contain; }
+  .zcell.locked img{ filter:brightness(0) opacity(.15); }
+  .zcell.locked{ color:#c0a898; }
+  .zcell .tag{ position:absolute; top:4px; left:4px; font-size:11px; background:#ff8c1a; color:#fff; border-radius:8px; padding:1px 6px; }
+  .zcell .val{ font-size:12px; color:#9a7a65; font-weight:400; }
+  .rmiss{ display:flex; gap:6px; justify-content:center; margin:2px 0 6px; }
+  .rmiss .mcell{ width:96px; font-size:13px; padding:4px 4px 3px; }
+  .rmiss .mcell .ic{ height:32px; }
+  .rmiss .mcell img{ width:32px; height:32px; }
+  .rmiss .mcell .ban{ font-size:24px; }
+  .rline{ font-size:16px; color:#7a4e33; margin:0 0 4px; min-height:20px; }
+  .rline b{ color:#f06a90; }
+  .newz{ display:flex; flex-wrap:wrap; gap:4px; justify-content:center; align-items:center; }
+  .newz img{ width:30px; height:30px; object-fit:contain; }
+  .medalrow{ min-height:44px; margin-bottom:2px; }
+
+  /* loading */
+  #loading{ background:var(--cream); font-size:22px; color:#b5785a; }
+  #loading .bar{ width:220px; height:12px; border-radius:6px; background:#f3dccb; overflow:hidden; margin-top:14px; }
+  #loading .bar i{ display:block; height:100%; width:0; background:linear-gradient(90deg,#ffb1c4,#f06a90); border-radius:6px; transition:width .2s; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="cv"></canvas>
+
+  <!-- ===== loading ===== -->
+  <div id="loading" class="ov">
+    <div>🍣 よみこみ中…</div>
+    <div class="bar"><i id="loadbar"></i></div>
+  </div>
+
+  <!-- ===== title ===== -->
+  <div id="title" class="ov hidden">
+    <h1>もふもふ<br>寿司キャッチ<small>MOFU SUSHI CATCH</small></h1>
+    <div class="mofu-hero">
+      <img class="m" src="assets/mofu.png" alt="">
+      <img class="p" src="assets/plate-white.png" style="top:-2px;" alt="">
+      <img class="p" src="assets/plate-red.png" style="top:-12px; animation-delay:.05s" alt="">
+      <img class="p" src="assets/plate-gold.png" style="top:-22px; animation-delay:.1s" alt="">
+    </div>
+    <div class="best" id="bestBox"><span>🏆</span><span id="bestVal">¥0</span><img id="bestMedal" src="" alt="" class="hidden"></div>
+    <div class="mhead" id="tMhead">🎯 きょうの ミッション</div>
+    <div class="mstrip" id="tMissions"></div>
+    <button class="btn" id="playBtn">▶ あそぶ</button>
+    <div class="icons">
+      <button class="icon" id="helpBtn" title="あそびかた">❓</button>
+      <button class="icon" id="zukanBtn" title="ずかん">📖</button>
+      <button class="icon" id="stampBtn" title="スタンプ">🐾</button>
+      <button class="icon hidden" id="bgBtn" title="はいけい">🏮</button>
+      <button class="icon" id="soundBtn" title="おと">🔊</button>
+      <a class="icon" href="https://rincanvas-hash.github.io/mofumofu-hill/" title="もふもふの丘">🏡</a>
+    </div>
+  </div>
+
+  <!-- ===== help ===== -->
+  <div id="help" class="ov hidden">
+    <div class="card">
+      <h2>🍣 あそびかた</h2>
+      <div class="hrow"><img src="assets/mofu.png" alt=""><span class="arrow">👆</span><span style="font-size:34px">↔</span><span class="val" style="color:#8a6a55;font-size:18px">ドラッグで移動</span></div>
+      <div class="hrow"><img src="assets/salmon.png" alt=""><span class="arrow">→</span><div class="hstack"><img src="assets/mofu.png" alt=""><img class="pl" src="assets/plate-white.png" style="top:-6px" alt=""></div><span class="val w">¥110</span></div>
+      <div class="hrow"><img src="assets/maguro.png" alt=""><span class="arrow">→</span><div class="hstack"><img src="assets/mofu.png" alt=""><img class="pl" src="assets/plate-red.png" style="top:-6px" alt=""></div><span class="val r">¥220</span></div>
+      <div class="hrow"><img src="assets/uni.png" alt=""><span class="arrow">→</span><div class="hstack"><img src="assets/mofu.png" alt=""><img class="pl" src="assets/plate-gold.png" style="top:-6px" alt=""></div><span class="val g">¥550</span></div>
+      <div class="hrow"><img src="assets/wasabi.png" alt=""><span class="arrow">→</span><span style="font-size:34px">😵</span><span class="val bad">1秒とまる</span></div>
+      <div class="hrow"><img src="assets/teacup.png" alt=""><span class="arrow">→</span><span style="font-size:34px">🌫️</span><span class="val bad">湯気で見えない</span></div>
+      <div class="hrow"><img src="assets/plate-empty.png" alt=""><span class="arrow">→</span><span style="font-size:34px">🍽️↓</span><span class="val bad">お皿が1枚落ちる</span></div>
+      <div class="hnote">⏱ 60秒でおしまい。おさらが 24まい つみあがると、まとめて おかいけい ✨ +¥1,000！</div>
+      <div class="row" style="margin-top:8px"><button class="btn small" id="helpClose">OK</button></div>
+    </div>
+  </div>
+
+  <!-- ===== zukan ===== -->
+  <div id="zukan" class="ov hidden">
+    <div class="card">
+      <h2 id="zTitle">📖 ずかん</h2>
+      <div class="zgrid" id="zGrid"></div>
+      <div class="row" style="margin-top:12px"><button class="btn small" id="zukanClose">OK</button></div>
+    </div>
+  </div>
+
+  <!-- ===== stamps ===== -->
+  <div id="stamps" class="ov hidden">
+    <div class="card">
+      <h2>🐾 スタンプ</h2>
+      <div class="hnote" style="margin-top:0">1日1回あそぶと スタンプが1つ。⭐はミッション3つ達成の日。7つで ごほうび🏮</div>
+      <div class="stamps" id="stampRow"></div>
+      <div class="rline" id="stampInfo"></div>
+      <div class="row" style="margin-top:10px"><button class="btn small" id="stampsClose">OK</button></div>
+    </div>
+  </div>
+
+  <!-- ===== result ===== -->
+  <div id="result" class="ov hidden">
+    <div class="bg"></div>
+    <div class="rwrap">
+    <div class="receipt">
+      <div style="font-size:16px;color:#9a7a65;letter-spacing:.2em">🧾 おかいけい</div>
+      <div class="total"><span>¥</span><b id="rTotal">0</b></div>
+      <div class="plates">
+        <div><img src="assets/plate-white.png" alt=""><span id="rW">0</span></div>
+        <div><img src="assets/plate-red.png" alt=""><span id="rR">0</span></div>
+        <div><img src="assets/plate-gold.png" alt=""><span id="rG">0</span></div>
+      </div>
+      <div class="medalrow"><img id="rMedal" src="" alt="" class="hidden"><span id="rNew" class="nb hidden">🎉 NEW BEST!</span></div>
+      <div class="rmiss" id="rMissions"></div>
+      <div class="rline" id="rStamp"></div>
+      <div class="rline newz" id="rZukan"></div>
+      <div class="bestline">🏆 <span id="rBest">¥0</span></div>
+      <div class="row">
+        <button class="btn small" id="againBtn">▶ もういちど</button>
+        <button class="btn small ghost" id="shareBtn">📤</button>
+        <button class="btn small ghost" id="homeBtn">🏠</button>
+      </div>
+    </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+/* ===================== 定数 ===================== */
+const W = 480; let H = 800;
+const GAME_SEC = 60;
+const MAX_PLATES = 24;         // ここまで積むと自動でお会計(ボーナス)
+const FULL_BONUS = 1000;
+const PLATE_STEP = 9;          // 皿1枚ぶんの高さ(px)
+const PLATE_W = 104;           // 頭の上の皿の描画幅
+const ITEM_SIZE = 86;          // 落下物の描画サイズ
+const MOFU_W = 176;
+let FLOOR_Y = H - 14;          // モフの足元(fitで更新)
+const LANE_Y = 66, LANE_H = 44; // 回転レーン
+const MEDAL = { gold: 12000, silver: 8000, bronze: 4000 };
+const STORAGE_KEY = 'mofusushi.v1';
+
+const ITEMS = {
+  salmon: { img:'salmon', plate:'white', value:110, w:12 },
+  ebi:    { img:'ebi',    plate:'white', value:110, w:12 },
+  tamago: { img:'tamago', plate:'white', value:110, w:12 },
+  ika:    { img:'ika',    plate:'white', value:110, w:12 },
+  maguro: { img:'maguro', plate:'red',   value:220, w:6 },
+  ikura:  { img:'ikura',  plate:'red',   value:220, w:6 },
+  uni:    { img:'uni',    plate:'gold',  value:550, w:2.4 },
+  pudding:{ img:'pudding',plate:'gold',  value:550, w:2.4 },
+  cake:   { img:'cake',   plate:'gold',  value:550, w:2.4 },
+  tsukimi:  { img:'tsukimi',   plate:'gold', value:880, w:1.8, season:9 },    // 9月限定 月見うさぎ
+  halloween:{ img:'halloween', plate:'gold', value:880, w:1.8, season:10 },   // 10月限定
+  momiji:   { img:'momiji',    plate:'gold', value:880, w:1.8, season:11 },   // 11月限定 もみじ
+  xmas:     { img:'xmas',      plate:'gold', value:880, w:1.8, season:12 },   // 12月限定 クリスマス
+  wasabi: { img:'wasabi', bad:'stun',    w:6 },
+  teacup: { img:'teacup', bad:'steam',   w:3.5 },
+  eplate: { img:'plate-empty', bad:'drop', w:5 },
+};
+const PLATE_IMG = { white:'plate-white', red:'plate-red', gold:'plate-gold' };
+const PLATE_COLOR = { white:'#8a8a8a', red:'#d8443b', gold:'#d29a1a' };
+const IMG_NAMES = ['mofu','salmon','ebi','tamago','ika','maguro','ikura','uni','pudding','cake','tsukimi','halloween','momiji','xmas','wasabi','teacup','plate-empty','plate-white','plate-red','plate-gold'];
+const ZUKAN_ORDER = ['salmon','ebi','tamago','ika','maguro','ikura','uni','pudding','cake','tsukimi','halloween','momiji','xmas'];
+const Q = new URLSearchParams(location.search);   // ?date=2026-10-05 で日付を上書き(テスト用)
+
+/* ===================== DOM / canvas ===================== */
+const $ = id => document.getElementById(id);
+const stage = $('stage'), cv = $('cv'), ctx = cv.getContext('2d');
+const IMG = {};
+
+function fit(){
+  // 画面の縦横比に合わせて論理高さを決める(スマホの上下黒帯をなくす)
+  H = Math.round(Math.max(760, Math.min(1080, W * innerHeight / innerWidth))); FLOOR_Y = H - 14;
+  stage.style.width = W + 'px'; stage.style.height = H + 'px';
+  const s = Math.min(innerWidth / W, innerHeight / H);
+  stage.style.transform = `translate(-50%,-50%) scale(${s})`;
+  const dpr = Math.min(devicePixelRatio || 1, 2.5);
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+addEventListener('resize', fit); fit();
+
+/* ===================== 保存 ===================== */
+let save = { best:0, plays:0, sound:true, days:{}, zukan:{}, stampDays:[], cards:0, nightBg:false, bg:'day' };
+try { const j = localStorage.getItem(STORAGE_KEY); if (j) save = Object.assign(save, JSON.parse(j)); } catch(e){}
+if (!Array.isArray(save.stampDays)) save.stampDays = [];
+for (const k of Object.keys(save.days).sort()){ if (typeof save.days[k] === 'string'){ save.days[k] = { medal: save.days[k], m:[false,false,false], stamped:true }; if (save.stampDays.length < 7 && !save.stampDays.includes(k)) save.stampDays.push(k); } }
+function persist(){ try { localStorage.setItem(STORAGE_KEY, JSON.stringify(save)); } catch(e){} }
+function medalFor(v){ return v >= MEDAL.gold ? 'gold' : v >= MEDAL.silver ? 'silver' : v >= MEDAL.bronze ? 'bronze' : ''; }
+function now(){ const q = Q.get('date'); const d = q ? new Date(q + 'T12:00:00') : new Date(); return isNaN(d) ? new Date() : d; }
+function seasonMonth(){ return now().getMonth() + 1; }
+function dayRec(dk){ return save.days[dk] || (save.days[dk] = { medal:'', m:[false,false,false], stamped:false }); }
+function todayKey(){ const d = now(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function yen(v){ return v.toLocaleString('ja-JP'); }
+
+/* ===================== 音 ===================== */
+let AC = null;
+function audio(){ if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){} } if (AC && AC.state === 'suspended') AC.resume(); return AC; }
+function tone(freq, dur, type='sine', vol=0.18, when=0, slide=0){
+  if (!save.sound) return; const ac = audio(); if (!ac) return;
+  const o = ac.createOscillator(), g = ac.createGain(); const t = ac.currentTime + when;
+  o.type = type; o.frequency.setValueAtTime(freq, t); if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, freq + slide), t + dur);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(ac.destination); o.start(t); o.stop(t + dur + 0.02);
+}
+function noise(dur, vol=0.12, when=0, hp=800){
+  if (!save.sound) return; const ac = audio(); if (!ac) return;
+  const n = Math.floor(ac.sampleRate * dur), b = ac.createBuffer(1, n, ac.sampleRate), d = b.getChannelData(0);
+  for (let i=0;i<n;i++) d[i] = (Math.random()*2-1) * (1 - i/n);
+  const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain(); const t = ac.currentTime + when;
+  s.buffer = b; f.type = 'highpass'; f.frequency.value = hp; g.gain.value = vol;
+  s.connect(f).connect(g).connect(ac.destination); s.start(t);
+}
+const SFX = {
+  tick(){ tone(880, 0.06, 'square', 0.05); },
+  catch(plate){ const base = plate==='gold' ? 1046 : plate==='red' ? 784 : 660; tone(base, 0.09, 'triangle', 0.16); tone(base*1.5, 0.12, 'sine', 0.1, 0.05); noise(0.05, 0.05, 0, 3000); },
+  clink(){ tone(2400, 0.05, 'sine', 0.06); },
+  miss(){ tone(180, 0.12, 'sine', 0.08, 0, -80); },
+  wasabi(){ tone(220, 0.25, 'sawtooth', 0.12, 0, -120); tone(160, 0.3, 'square', 0.06, 0.05); },
+  steam(){ noise(0.9, 0.08, 0, 1500); },
+  drop(){ tone(500, 0.08, 'triangle', 0.1, 0, -300); tone(300, 0.15, 'triangle', 0.08, 0.08, -150); noise(0.08, 0.05, 0.1); },
+  milestone(){ [523, 659, 784].forEach((f,i)=>tone(f, 0.18, 'triangle', 0.12, i*0.07)); },
+  shine(){ [1046, 1318, 1568, 2093].forEach((f,i)=>tone(f, 0.25, 'sine', 0.1, i*0.06)); },
+  full(){ [523, 659, 784, 1046, 1318].forEach((f,i)=>tone(f, 0.28, 'triangle', 0.14, i*0.08)); noise(0.3, 0.06, 0.3, 2000); },
+  end(){ tone(784, 0.3, 'sine', 0.14); tone(659, 0.3, 'sine', 0.12, 0.25); tone(523, 0.5, 'sine', 0.12, 0.5); },
+  burst(){ [660, 880, 1100].forEach((f,i)=>tone(f, 0.12, 'square', 0.07, i*0.05)); },
+};
+
+/* ===================== 状態 ===================== */
+const S = {
+  mode: 'load',          // load | title | play | over
+  t: 0, left: GAME_SEC,
+  score: 0,
+  mofu: { x: W/2, tx: W/2, vx: 0, stun: 0, face: 0 },
+  plates: [],            // { plate:'white'|'red'|'gold', value, bounce }
+  items: [],             // 落下物
+  effects: [],           // 演出パーティクル
+  floats: [],            // +¥ の文字
+  flyPlates: [],         // 落ちる/飛ぶ皿
+  sway: 0, swayV: 0, wobble: 0, wobbleT: 0,
+  steam: 0, steamMax: 0,
+  spawnT: 0, burst: 0, burstT: 0, burstsDone: 0,
+  counts: { white:0, red:0, gold:0, full:0 },
+  types: {}, bad: {}, missions: [],
+  caught: 0, missed: 0,
+  beltX: 0, endT: 0,
+  shake: 0,
+  input: { dragging:false, left:false, right:false },
+};
+
+/* ===================== 画像読み込み ===================== */
+function loadImages(){
+  let done = 0; const total = IMG_NAMES.length + 1;
+  const bump = () => { done++; $('loadbar').style.width = Math.round(done/total*100) + '%'; if (done >= total) ready(); };
+  IMG_NAMES.forEach(n => { const im = new Image(); im.onload = bump; im.onerror = bump; im.src = `assets/${n}.png`; IMG[n] = im; });
+  const bg = new Image(); bg.onload = bump; bg.onerror = bump; bg.src = 'assets/ate.jpg';
+}
+function ready(){
+  $('loading').classList.add('hidden');
+  showTitle();
+  requestAnimationFrame(loop);
+}
+
+/* ===================== きょうのミッション ===================== */
+function seededRand(seed){ let h = 2166136261; for (const c of seed){ h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); }
+  return () => { h += 0x6D2B79F5; let t = Math.imul(h ^ (h >>> 15), 1 | h); t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function dailyMissions(){
+  const rnd = seededRand('mofusushi-' + todayKey());
+  const redItem = ['maguro','ikura'][Math.floor(rnd()*2)], whiteItem = ['salmon','ebi','tamago','ika'][Math.floor(rnd()*4)];
+  const pool = [
+    { k:'plate', plate:'white', n: 15 + Math.floor(rnd()*3)*5 },
+    { k:'plate', plate:'red',   n: 3 + Math.floor(rnd()*3)*2 },
+    { k:'plate', plate:'gold',  n: 1 + Math.floor(rnd()*2) },
+    { k:'score', n: [5000,7000,9000][Math.floor(rnd()*3)] },
+    { k:'avoid', item: ['wasabi','teacup','eplate'][Math.floor(rnd()*3)] },
+    { k:'full',  n:1 },
+    { k:'item',  item: rnd() < 0.5 ? whiteItem : redItem, n: 0 },
+  ];
+  pool[6].n = (ITEMS[pool[6].item].plate === 'red' ? 3 : 5) + Math.floor(rnd()*2)*2;
+  for (let i = pool.length - 1; i > 0; i--){ const j = Math.floor(rnd() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+  return pool.slice(0, 3);
+}
+function missionProgress(m){
+  let cur = 0, done = false;
+  if (m.k === 'plate'){ cur = S.counts[m.plate]; done = cur >= m.n; }
+  else if (m.k === 'score'){ cur = S.score; done = cur >= m.n; }
+  else if (m.k === 'avoid'){ cur = S.bad[m.item] || 0; done = cur === 0; }
+  else if (m.k === 'full'){ cur = S.counts.full; done = cur >= m.n; }
+  else if (m.k === 'item'){ cur = S.types[m.item] || 0; done = cur >= m.n; }
+  return { cur, done };
+}
+function missionHTML(m, cls){
+  let ic = '', txt = '';
+  if (m.k === 'plate'){ ic = `<img class="pl" src="assets/${PLATE_IMG[m.plate]}.png" alt="">`; txt = '×' + m.n; }
+  else if (m.k === 'score'){ ic = '<span style="font-size:30px">🧾</span>'; txt = '¥' + yen(m.n); }
+  else if (m.k === 'avoid'){ ic = `<img src="assets/${ITEMS[m.item].img}.png" alt=""><span class="ban">🚫</span>`; txt = '0'; }
+  else if (m.k === 'full'){ ic = '<span style="font-size:30px">🍽️</span>'; txt = '24まい'; }
+  else if (m.k === 'item'){ ic = `<img src="assets/${ITEMS[m.item].img}.png" alt="">`; txt = '×' + m.n; }
+  return `<div class="mcell ${cls}"><div class="ic">${ic}</div><div>${txt}</div></div>`;
+}
+function drawMissions(){
+  const y = LANE_Y + LANE_H + 8, h = 32, w = 146, gap = 8; const x0 = (W - (w * 3 + gap * 2)) / 2;
+  S.missions.forEach((m, i) => {
+    const p = missionProgress(m); const x = x0 + i * (w + gap);
+    ctx.fillStyle = p.done ? 'rgba(223,245,227,.92)' : 'rgba(255,255,255,.82)'; roundRect(x, y, w, h, 16); ctx.fill();
+    let label = ''; ctx.fillStyle = '#5a3a26';
+    if (m.k === 'plate'){ drawImg(PLATE_IMG[m.plate], x + 22, y + h/2, 34, 19); label = `${p.cur}/${m.n}`; }
+    else if (m.k === 'score'){ ctx.font = '18px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('🧾', x + 10, y + 23); label = `¥${yen(m.n)}`; }
+    else if (m.k === 'avoid'){ drawImg(ITEMS[m.item].img, x + 22, y + h/2, 30, 30); ctx.font = '18px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('🚫', x + 22, y + 23); label = p.cur === 0 ? '0' : '✗'; }
+    else if (m.k === 'full'){ ctx.font = '18px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('🍽️', x + 10, y + 23); label = `24  ${p.cur}/${m.n}`; }
+    else if (m.k === 'item'){ drawImg(ITEMS[m.item].img, x + 22, y + h/2, 30, 30); label = `${p.cur}/${m.n}`; }
+    ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'left'; ctx.fillStyle = p.done ? '#2f8a4a' : '#5a3a26'; ctx.fillText((p.done ? '✓ ' : '') + label, x + 44, y + 22);
+  });
+}
+
+/* ===================== ずかん・スタンプ ===================== */
+function renderZukan(){
+  let have = 0;
+  $('zGrid').innerHTML = ZUKAN_ORDER.map(t => { const it = ITEMS[t]; const n = save.zukan[t] || 0; if (n) have++;
+    const tag = it.season ? `<span class="tag">${it.season}月</span>` : '';
+    return `<div class="zcell ${n ? '' : 'locked'}">${tag}<img src="assets/${it.img}.png" alt=""><div>${n ? '×' + n : '?'}</div><div class="val">¥${yen(it.value)}</div></div>`; }).join('');
+  $('zTitle').textContent = `📖 ずかん ${have}/${ZUKAN_ORDER.length}`;
+}
+function renderStamps(){
+  const dk = todayKey(); const days = save.stampDays;
+  let html = '';
+  for (let i = 0; i < 7; i++){ const d = days[i]; const on = !!d; const star = on && save.days[d] && save.days[d].m.every(Boolean);
+    html += `<div class="stamp ${on ? 'on' : ''} ${d === dk ? 'today' : ''}">${on ? '🐾' : (i === 6 ? '🏮' : '')}${star ? '<span class="st">⭐</span>' : ''}</div>`; }
+  $('stampRow').innerHTML = html;
+  $('stampInfo').innerHTML = (save.cards ? `🏮 ×${save.cards}　` : '') + (save.nightBg ? '夜のお寿司屋さん ✓（タイトルの🏮で切りかえ）' : 'あと ' + (7 - days.length) + ' で ごほうび🏮');
+}
+
+/* ===================== 画面遷移 ===================== */
+function showTitle(){
+  S.mode = 'title';
+  $('title').classList.remove('hidden'); $('result').classList.add('hidden');
+  $('bestVal').textContent = '¥' + yen(save.best);
+  const m = medalFor(save.best); const bm = $('bestMedal');
+  if (m) { bm.src = `assets/medal-${m}.png`; bm.classList.remove('hidden'); } else bm.classList.add('hidden');
+  $('soundBtn').textContent = save.sound ? '🔊' : '🔇';
+  const day = dayRec(todayKey()); const ms = dailyMissions();
+  $('tMissions').innerHTML = ms.map((m, i) => missionHTML(m, day.m[i] ? 'done' : '')).join('');
+  $('tMhead').textContent = day.m.every(Boolean) ? '🎯 きょうの ミッション ✓ かんぺき！' : '🎯 きょうの ミッション';
+  $('bgBtn').classList.toggle('hidden', !save.nightBg); $('bgBtn').textContent = save.bg === 'night' ? '☀️' : '🏮';
+}
+function startGame(){
+  Object.assign(S, { mode:'play', t:0, left:GAME_SEC, score:0, plates:[], items:[], effects:[], floats:[], flyPlates:[],
+    sway:0, swayV:0, wobble:0, wobbleT:0, steam:0, steamMax:0, spawnT:0.6, burst:0, burstT:0, burstsDone:0,
+    counts:{ white:0, red:0, gold:0, full:0 }, types:{}, bad:{}, missions: dailyMissions(), caught:0, missed:0, endT:0, shake:0 });
+  S.mofu = { x: W/2, tx: W/2, vx: 0, stun: 0, face: 0 };
+  $('title').classList.add('hidden'); $('result').classList.add('hidden'); $('help').classList.add('hidden');
+  SFX.tick();
+}
+function endGame(){
+  S.mode = 'over'; S.endT = 0; SFX.end();
+  save.plays++;
+  const isNew = S.score > save.best && S.score > 0;
+  if (isNew) save.best = S.score;
+  const m = medalFor(S.score);
+  const dk = todayKey(); const rank = { '':0, bronze:1, silver:2, gold:3 };
+  const day = dayRec(dk); if (rank[m] > rank[day.medal || '']) day.medal = m;
+  // ミッション判定
+  const res = S.missions.map(mm => missionProgress(mm).done);
+  res.forEach((d, i) => { if (d) day.m[i] = true; });
+  const allDone = day.m.every(Boolean);
+  // スタンプ(1日1回)
+  let stampNew = false, reward = false;
+  if (!day.stamped){ day.stamped = true; stampNew = true; save.stampDays.push(dk);
+    if (save.stampDays.length >= 7){ save.cards++; reward = true; save.stampDays = []; if (!save.nightBg){ save.nightBg = true; save.bg = 'night'; } } }
+  // ずかん
+  const newZ = [];
+  for (const t in S.types){ if (!save.zukan[t]) newZ.push(t); save.zukan[t] = (save.zukan[t] || 0) + S.types[t]; }
+  persist();
+  setTimeout(() => showResult(isNew, m, { res, allDone, stampNew, reward, newZ }), 900);
+}
+function showResult(isNew, m, ex){
+  ex = ex || { res:[], allDone:false, stampNew:false, reward:false, newZ:[] };
+  $('rTotal').textContent = yen(S.score);
+  $('rMissions').innerHTML = S.missions.map((mm, i) => missionHTML(mm, ex.res[i] ? 'done' : 'fail')).join('');
+  const stampN = ex.reward ? 7 : save.stampDays.length;
+  $('rStamp').innerHTML = ex.reward ? '🐾 7/7 🎉 <b>🏮 ごほうび！夜のお寿司屋さん</b>' : ('🐾 ' + stampN + '/7' + (ex.stampNew ? ' <b>+1</b>' : '') + (ex.allDone ? ' ⭐' : ''));
+  $('rZukan').innerHTML = ex.newZ.length ? '📖 <b>NEW</b> ' + ex.newZ.map(t => `<img src="assets/${ITEMS[t].img}.png" alt="">`).join('') : '';
+  $('rW').textContent = S.counts.white; $('rR').textContent = S.counts.red; $('rG').textContent = S.counts.gold;
+  const rm = $('rMedal'); if (m) { rm.src = `assets/medal-${m}.png`; rm.classList.remove('hidden'); } else rm.classList.add('hidden');
+  $('rNew').classList.toggle('hidden', !isNew);
+  $('rBest').textContent = '¥' + yen(save.best);
+  $('result').classList.remove('hidden');
+  if (m === 'gold') setTimeout(SFX.shine, 300);
+}
+
+/* ===================== 入力 ===================== */
+function pointerX(e){
+  const r = stage.getBoundingClientRect(); return (e.clientX - r.left) / r.width * W;
+}
+cv.addEventListener('pointerdown', e => { audio(); if (S.mode !== 'play') return; S.input.dragging = true; S.mofu.tx = pointerX(e); cv.setPointerCapture(e.pointerId); });
+cv.addEventListener('pointermove', e => { if (S.mode !== 'play' || !S.input.dragging) return; S.mofu.tx = pointerX(e); });
+const endDrag = () => { S.input.dragging = false; };
+cv.addEventListener('pointerup', endDrag); cv.addEventListener('pointercancel', endDrag);
+addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft' || e.key === 'a') S.input.left = true;
+  if (e.key === 'ArrowRight' || e.key === 'd') S.input.right = true;
+  if ((e.key === ' ' || e.key === 'Enter') && S.mode === 'title') startGame();
+});
+addEventListener('keyup', e => {
+  if (e.key === 'ArrowLeft' || e.key === 'a') S.input.left = false;
+  if (e.key === 'ArrowRight' || e.key === 'd') S.input.right = false;
+});
+$('playBtn').onclick = () => { audio(); startGame(); };
+$('againBtn').onclick = () => { audio(); startGame(); };
+$('homeBtn').onclick = () => { SFX.tick(); showTitle(); };
+$('helpBtn').onclick = () => { SFX.tick(); $('help').classList.remove('hidden'); };
+$('helpClose').onclick = () => { SFX.tick(); $('help').classList.add('hidden'); };
+$('help').addEventListener('click', e => { if (e.target === $('help')) $('help').classList.add('hidden'); });
+$('zukanBtn').onclick = () => { SFX.tick(); renderZukan(); $('zukan').classList.remove('hidden'); };
+$('zukanClose').onclick = () => { SFX.tick(); $('zukan').classList.add('hidden'); };
+$('zukan').addEventListener('click', e => { if (e.target === $('zukan')) $('zukan').classList.add('hidden'); });
+$('stampBtn').onclick = () => { SFX.tick(); renderStamps(); $('stamps').classList.remove('hidden'); };
+$('stampsClose').onclick = () => { SFX.tick(); $('stamps').classList.add('hidden'); };
+$('stamps').addEventListener('click', e => { if (e.target === $('stamps')) $('stamps').classList.add('hidden'); });
+$('bgBtn').onclick = () => { save.bg = save.bg === 'night' ? 'day' : 'night'; persist(); $('bgBtn').textContent = save.bg === 'night' ? '☀️' : '🏮'; SFX.tick(); };
+$('soundBtn').onclick = () => { save.sound = !save.sound; persist(); $('soundBtn').textContent = save.sound ? '🔊' : '🔇'; SFX.tick(); };
+$('shareBtn').onclick = async () => {
+  const text = `🍣 もふもふ寿司キャッチ\n🧾 ¥${yen(S.score)}（${S.counts.white + S.counts.red + S.counts.gold}皿）\n#もふもふの丘`;
+  const url = location.href.split('?')[0];
+  try { if (navigator.share) await navigator.share({ title:'もふもふ寿司キャッチ', text, url }); else { await navigator.clipboard.writeText(text + '\n' + url); $('shareBtn').textContent = '✅'; setTimeout(()=>$('shareBtn').textContent='📤', 1200); } } catch(e){}
+};
+
+/* ===================== ゲーム更新 ===================== */
+function stackTopY(){ return headY() - S.plates.length * PLATE_STEP; }
+function headY(){ return FLOOR_Y - MOFU_W * 0.93; }   // 頭のてっぺん(画像比)
+function difficulty(){ return Math.min(1, S.t / GAME_SEC); }
+
+function pickType(){
+  const d = difficulty();
+  const allowBad = S.t > 7 && S.burst <= 0;
+  let total = 0; const pool = [];
+  const month = seasonMonth();
+  for (const k in ITEMS){ const it = ITEMS[k]; if (it.bad && !allowBad) continue; if (it.season && it.season !== month) continue;
+    let w = it.w; if (it.bad) w *= 0.6 + d * 0.9; if (it.plate === 'gold') w *= 0.8 + d * 0.6;
+    pool.push([k, w]); total += w; }
+  let r = Math.random() * total; for (const [k, w] of pool){ r -= w; if (r <= 0) return k; } return 'salmon';
+}
+function spawn(type, x){
+  const d = difficulty(); const it = ITEMS[type];
+  const pats = [['straight', 1]]; if (S.t > 8 || S.burst > 0) pats.push(['sway', 1.3]); if (S.t > 16) pats.push(['spin', 1.3]); if (S.t > 26) pats.push(['zigzag', 1.3]);
+  let pw = pats.reduce((a, q) => a + q[1], 0), pr = Math.random() * pw, pat = 'straight';
+  for (const [name, w] of pats){ pr -= w; if (pr <= 0){ pat = name; break; } }
+  const hk = (H - LANE_Y) / (800 - LANE_Y);   // 画面が縦長でも落下時間が同じになるように
+  const speed = (210 + 200 * d) * hk * (0.9 + Math.random() * 0.25) * (S.burst > 0 ? 1.1 : 1);
+  const o = { type, x: x != null ? x : 60 + Math.random() * (W - 120), y: LANE_Y + 10, vy: speed, vx: 0, rot: 0, rotV: 0, pat, phase: Math.random() * 6.28, amp: 0, scale: 0.2, age: 0, dead: false, bad: !!it.bad };
+  if (pat === 'sway') { o.amp = 40 + Math.random() * 50; }
+  if (pat === 'spin') { o.rotV = (Math.random() < 0.5 ? -1 : 1) * (3 + Math.random() * 4); }
+  if (pat === 'zigzag') { o.vx = (Math.random() < 0.5 ? -1 : 1) * (150 + Math.random() * 120); }
+  S.items.push(o); return o;
+}
+function addFloat(x, y, text, color, size=26){ S.floats.push({ x, y, text, color, size, t:0 }); }
+function sparkle(x, y, n, colors, spread=180){
+  for (let i=0;i<n;i++){ const a = Math.random()*6.28, sp = 60 + Math.random()*spread;
+    S.effects.push({ x, y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp - 80, t:0, life:0.6+Math.random()*0.5, c:colors[i%colors.length], r:3+Math.random()*4, star: Math.random()<0.3 }); }
+}
+
+function update(dt){
+  if (S.mode === 'over'){ S.endT += dt; stepVisuals(dt); return; }
+  if (S.mode !== 'play') return;
+  S.t += dt; S.left = Math.max(0, GAME_SEC - S.t);
+  const m = S.mofu;
+
+  // --- モフ移動
+  if (m.stun > 0){ m.stun -= dt; m.tx = m.x; }
+  else {
+    if (S.input.left) m.tx = m.x - 520 * dt; if (S.input.right) m.tx = m.x + 520 * dt;
+  }
+  m.tx = Math.max(MOFU_W*0.32, Math.min(W - MOFU_W*0.32, m.tx));
+  const maxV = 1500 * dt; let dx = m.tx - m.x; dx = Math.max(-maxV, Math.min(maxV, dx));
+  const nx = m.x + dx; m.vx = (nx - m.x) / Math.max(dt, 1e-4); m.x = nx;
+
+  // --- 皿の塔のしなり
+  const target = Math.max(-22, Math.min(22, -m.vx * 0.03));
+  S.swayV += (target - S.sway) * 60 * dt; S.swayV *= Math.pow(0.02, dt); S.sway += S.swayV * dt;
+  if (S.wobble > 0){ S.wobbleT += dt; S.wobble = Math.max(0, S.wobble - dt * 1.2); }
+  if (S.shake > 0) S.shake = Math.max(0, S.shake - dt * 3);
+
+  // --- 出現
+  if (S.burst > 0){ S.burstT -= dt; if (S.burstT <= 0){ spawn(pickType()); S.burst--; S.burstT = 0.22; } }
+  else {
+    S.spawnT -= dt;
+    if (S.spawnT <= 0){ spawn(pickType()); const d = difficulty(); S.spawnT = (1.05 - 0.5 * d) * (0.75 + Math.random() * 0.5); }
+    // 大盤振る舞いタイム(25秒・47秒)
+    const bursts = [25, 47]; if (S.burstsDone < bursts.length && S.t >= bursts[S.burstsDone]){ S.burstsDone++; S.burst = 7; S.burstT = 0; SFX.burst(); addFloat(W/2, 300, '🍣 ✨ 🍣', '#f06a90', 34); }
+  }
+
+  // --- 落下物
+  const topY = stackTopY(); const half = S.plates.length ? PLATE_W * 0.5 : MOFU_W * 0.26;
+  for (const o of S.items){
+    o.age += dt; o.scale = Math.min(1, o.scale + dt * 4);
+    o.y += o.vy * dt;
+    if (o.pat === 'sway') o.x += Math.cos(o.phase + o.age * 3.2) * o.amp * dt * 1.6;
+    if (o.pat === 'zigzag'){ o.x += o.vx * dt; if (o.x < 46){ o.x = 46; o.vx = Math.abs(o.vx);} if (o.x > W-46){ o.x = W-46; o.vx = -Math.abs(o.vx);} }
+    if (o.pat === 'spin') o.rot += o.rotV * dt;
+    const bottom = o.y + ITEM_SIZE * 0.36;
+    if (!o.dead && bottom >= topY - 6 && bottom <= topY + 26 && Math.abs(o.x - (m.x + S.sway)) < half + 14){
+      o.dead = true; catchItem(o);
+    } else if (!o.dead && o.y > H + 40){ o.dead = true; S.missed++; if (!o.bad) SFX.miss(); }
+    else if (!o.dead && bottom >= FLOOR_Y - 4 && !o.bad && Math.abs(o.x - m.x) >= half + 14){
+      // 床に落ちて「ぽとっ」
+      o.dead = true; S.missed++; SFX.miss(); sparkle(o.x, FLOOR_Y - 6, 5, ['#d9c2b0'], 60);
+    }
+  }
+  S.items = S.items.filter(o => !o.dead);
+
+  // --- 湯気
+  if (S.steam > 0) S.steam = Math.max(0, S.steam - dt);
+  if (m.face > 0) m.face -= dt;
+
+  stepVisuals(dt);
+  if (S.left <= 0) endGame();
+}
+function stepVisuals(dt){
+  S.beltX = (S.beltX + 70 * dt) % 48;
+  for (const f of S.floats) f.t += dt; S.floats = S.floats.filter(f => f.t < 1.1);
+  for (const p of S.effects){ p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 260 * dt; } S.effects = S.effects.filter(p => p.t < p.life);
+  for (const p of S.flyPlates){ p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += (p.up ? -20 : 900) * dt; p.rot += p.rotV * dt;
+    if (p.trail && p.t < 1.2) S.effects.push({ x:p.x + (Math.random()-0.5)*30, y:p.y + (Math.random()-0.5)*20, vx:(Math.random()-0.5)*40, vy:60, t:0, life:0.35, c:'#fff', r:4+Math.random()*4, star:false }); } S.flyPlates = S.flyPlates.filter(p => p.t < 2.2 && p.y > -200);
+  for (const p of S.plates) if (p.bounce > 0) p.bounce = Math.max(0, p.bounce - dt * 4);
+}
+
+function catchItem(o){
+  const it = ITEMS[o.type]; const m = S.mofu; const topY = stackTopY();
+  if (it.bad){
+    S.bad[o.type] = (S.bad[o.type] || 0) + 1;
+    if (it.bad === 'stun'){ m.stun = 1.0; m.face = 1.0; S.shake = 1; SFX.wasabi(); addFloat(m.x, topY - 40, '！！', '#3aa03a', 40); sparkle(o.x, topY, 8, ['#7ac142','#b6e37a'], 120); }
+    else if (it.bad === 'steam'){ S.steam = 3.2; S.steamMax = 3.2; SFX.steam(); addFloat(m.x, topY - 40, '♨', '#8fa3b0', 44); }
+    else if (it.bad === 'drop'){
+      if (S.plates.length){ const p = S.plates.pop(); S.score = Math.max(0, S.score - p.value); S.counts[p.plate] = Math.max(0, S.counts[p.plate] - 1);
+        S.flyPlates.push({ plate:p.plate, x:m.x + S.sway, y: topY - 8, vx:(Math.random()<0.5?-1:1)*(160+Math.random()*120), vy:-1100, rot:0, rotV:(Math.random()<0.5?-1:1)*16, t:0, up:true, trail:true });
+        SFX.drop(); S.shake = 1; S.wobble = 1;
+        addFloat(m.x, topY - 40, '-¥' + yen(p.value), '#8a5a3a', 30);
+        addFloat(W/2, H * 0.42, '🍽️💨 -¥' + yen(p.value), '#d8443b', 40);
+        sparkle(m.x + S.sway, topY - 10, 16, ['#ffffff','#f0c0c0','#d8443b'], 260); }
+      else { SFX.clink(); addFloat(m.x, topY - 40, '…', '#8a5a3a', 30); }
+    }
+    return;
+  }
+  // 寿司: 頭に皿を積む・寿司はぱくっ
+  S.plates.push({ plate: it.plate, value: it.value, bounce: 1 });
+  S.score += it.value; S.counts[it.plate]++; S.caught++; S.types[o.type] = (S.types[o.type] || 0) + 1;
+  SFX.catch(it.plate);
+  addFloat(m.x + S.sway, topY - 50, '+¥' + yen(it.value), PLATE_COLOR[it.plate], it.plate === 'gold' ? 32 : 26);
+  sparkle(m.x + S.sway, topY - 10, it.plate === 'gold' ? 14 : 6, it.plate === 'gold' ? ['#ffd54a','#fff1a8','#ffb300'] : it.plate === 'red' ? ['#ff8a80','#ffd0c8'] : ['#ffffff','#ffe6ee'], 140);
+  const n = S.plates.length;
+  if (n === MAX_PLATES){ fullClear(); return; }
+  if (n % 5 === 0){ S.wobble = 1; S.wobbleT = 0; if (n >= 10){ SFX.shine(); sparkle(m.x + S.sway, stackTopY() - 20, 18, ['#fff7b0','#ffd54a','#ffffff'], 220); addFloat(m.x, stackTopY() - 90, '✨' + n + '✨', '#e0a020', 34); } else { SFX.milestone(); addFloat(m.x, stackTopY() - 90, n + '!', '#f06a90', 34); } }
+}
+function fullClear(){
+  const m = S.mofu; const topY = stackTopY();
+  S.plates.forEach((p, i) => S.flyPlates.push({ plate:p.plate, x:m.x + S.sway * (i / MAX_PLATES), y: headY() - i * PLATE_STEP, vx:(Math.random()-0.5)*260, vy:-(380 + Math.random()*260), rot:0, rotV:(Math.random()-0.5)*8, t:0, up:true }));
+  S.plates = []; S.score += FULL_BONUS; S.counts.full++;
+  SFX.full(); S.shake = 0.6;
+  addFloat(W/2, 330, '🧾 +¥' + yen(FULL_BONUS), '#e0a020', 40);
+  sparkle(m.x, topY, 40, ['#ffd54a','#ff8ab0','#8ad0ff','#fff'], 300);
+}
+
+/* ===================== 描画 ===================== */
+function drawImg(name, x, y, w, h, rot=0, alpha=1){
+  const im = IMG[name]; if (!im || !im.naturalWidth) return;
+  ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, y); if (rot) ctx.rotate(rot); ctx.drawImage(im, -w/2, -h/2, w, h); ctx.restore();
+}
+function roundRect(x, y, w, h, r){ ctx.beginPath(); ctx.moveTo(x+r, y); ctx.arcTo(x+w, y, x+w, y+h, r); ctx.arcTo(x+w, y+h, x, y+h, r); ctx.arcTo(x, y+h, x, y, r); ctx.arcTo(x, y, x+w, y, r); ctx.closePath(); }
+
+function draw(){
+  const m = S.mofu;
+  ctx.save();
+  if (S.shake > 0){ ctx.translate((Math.random()-0.5) * 10 * S.shake, (Math.random()-0.5) * 8 * S.shake); }
+
+  const night = save.bg === 'night' && save.nightBg;
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  if (night){ g.addColorStop(0, '#1b2140'); g.addColorStop(0.6, '#3a2a4a'); g.addColorStop(1, '#5a3a3a'); }
+  else { g.addColorStop(0, '#fff3e4'); g.addColorStop(0.75, '#ffe4cc'); g.addColorStop(1, '#f6cfae'); }
+  ctx.fillStyle = g; ctx.fillRect(-20, -20, W+40, H+40);
+  if (night){
+    // 星と提灯(夜のお寿司屋さん)
+    ctx.fillStyle = '#fff'; for (let i = 0; i < 40; i++){ const sx = (i * 137) % W, sy = 20 + (i * 71) % Math.round(H * 0.5); const tw = 0.5 + 0.5 * Math.sin(S.t * 2 + i); ctx.globalAlpha = 0.35 + 0.5 * tw; ctx.fillRect(sx, sy, 2, 2); } ctx.globalAlpha = 1;
+    for (let i = 0; i < 5; i++){ const lx = 48 + i * 96, ly = LANE_Y + LANE_H + 78; const rg = ctx.createRadialGradient(lx, ly, 4, lx, ly, 70); rg.addColorStop(0, 'rgba(255,170,60,.45)'); rg.addColorStop(1, 'rgba(255,170,60,0)'); ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(lx, ly, 70, 0, 6.28); ctx.fill();
+      ctx.strokeStyle = '#6a4a3a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(lx, LANE_Y + LANE_H); ctx.lineTo(lx, ly - 22); ctx.stroke();
+      ctx.font = '40px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#000'; ctx.fillText('🏮', lx, ly + 14); }
+  } else {
+    // のれん風の飾り
+    ctx.fillStyle = 'rgba(240,138,166,.14)'; for (let i=0;i<6;i++){ ctx.beginPath(); ctx.arc(40 + i*80, 150 + (i%2)*30, 50, 0, 6.28); ctx.fill(); }
+  }
+  // 床(カウンター)
+  ctx.fillStyle = night ? '#7a4a30' : '#c98a5b'; ctx.fillRect(-20, FLOOR_Y, W+40, H - FLOOR_Y + 20);
+  ctx.fillStyle = night ? '#6a3e28' : '#b8794b'; ctx.fillRect(-20, FLOOR_Y, W+40, 5);
+
+  // 回転レーン
+  ctx.fillStyle = '#5d4030'; roundRect(-10, LANE_Y, W+20, LANE_H, 8); ctx.fill();
+  ctx.fillStyle = '#7d5a44'; for (let x = -48 + S.beltX; x < W + 48; x += 48){ ctx.fillRect(x, LANE_Y + 6, 26, LANE_H - 12); }
+  ctx.fillStyle = 'rgba(255,255,255,.08)'; ctx.fillRect(-10, LANE_Y, W+20, 6);
+  // きょうのミッション(進捗)
+  if (S.mode === 'play' || S.mode === 'over') drawMissions();
+
+  // 落下物
+  for (const o of S.items){
+    const s = ITEM_SIZE * o.scale; const shadowA = o.age < 0.3 ? o.age/0.3 : 1;
+    ctx.save(); ctx.globalAlpha = 0.14 * shadowA; ctx.fillStyle = '#000';
+    ctx.beginPath(); ctx.ellipse(o.x, FLOOR_Y + 3, 26 * (0.6 + 0.4 * (o.y / H)), 7, 0, 0, 6.28); ctx.fill(); ctx.restore();
+    drawImg(ITEMS[o.type].img, o.x, o.y, s, s, o.rot);
+  }
+
+  // モフ
+  const mx = m.x; const mofuTop = FLOOR_Y - MOFU_W;
+  const jiggle = m.stun > 0 ? Math.sin(S.t * 60) * 4 : 0;
+  ctx.save(); ctx.translate(mx + jiggle, FLOOR_Y);
+  ctx.globalAlpha = 0.18; ctx.fillStyle = '#5a3a26'; ctx.beginPath(); ctx.ellipse(0, 2, MOFU_W*0.4, 10, 0, 0, 6.28); ctx.fill(); ctx.globalAlpha = 1;
+  const im = IMG.mofu; if (im.naturalWidth) ctx.drawImage(im, -MOFU_W/2, -MOFU_W, MOFU_W, MOFU_W);
+  ctx.restore();
+
+  // 皿の塔
+  const n = S.plates.length; const wob = S.wobble > 0 ? Math.sin(S.wobbleT * 28) * 10 * S.wobble : 0;
+  const ph = PLATE_W * 0.55;
+  for (let i = 0; i < n; i++){
+    const p = S.plates[i]; const k = n > 1 ? i / (n - 1) : 0;
+    const ox = S.sway * Math.pow(k, 1.3) + wob * Math.pow(k, 1.5) * (i % 2 ? 1 : -1) * 0.5 + wob * k;
+    const oy = headY() - i * PLATE_STEP - (p.bounce > 0 ? Math.sin(p.bounce * 3.14) * 10 : 0);
+    drawImg(PLATE_IMG[p.plate], mx + ox, oy - ph * 0.5 + 6, PLATE_W, ph);
+  }
+  // 飛ぶ皿
+  for (const p of S.flyPlates) drawImg(PLATE_IMG[p.plate], p.x, p.y, PLATE_W, ph, p.rot, Math.max(0, 1 - p.t / 2.2));
+
+  // 顔の「！！」(わさび)
+  if (m.face > 0){ ctx.save(); ctx.globalAlpha = Math.min(1, m.face * 3); ctx.fillStyle = '#3aa03a'; ctx.font = 'bold 44px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('！！', mx + 70, mofuTop + 30); ctx.restore(); }
+
+  // パーティクル
+  for (const p of S.effects){ const a = 1 - p.t / p.life; ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = p.c;
+    if (p.star){ ctx.translate(p.x, p.y); ctx.rotate(p.t * 4); ctx.beginPath(); for (let i=0;i<5;i++){ const r1 = p.r*2.2, r2 = p.r*0.9; ctx.lineTo(Math.cos(i*1.256)*r1, Math.sin(i*1.256)*r1); ctx.lineTo(Math.cos(i*1.256+0.628)*r2, Math.sin(i*1.256+0.628)*r2);} ctx.closePath(); ctx.fill(); }
+    else { ctx.beginPath(); ctx.arc(p.x, p.y, p.r * (0.5 + a*0.5), 0, 6.28); ctx.fill(); }
+    ctx.restore(); }
+
+  // 浮き文字
+  for (const f of S.floats){ const a = f.t < 0.8 ? 1 : 1 - (f.t - 0.8) / 0.3; ctx.save(); ctx.globalAlpha = a; ctx.font = `bold ${f.size}px sans-serif`; ctx.textAlign = 'center'; ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.fillStyle = f.color; const y = f.y - f.t * 55; ctx.strokeText(f.text, f.x, y); ctx.fillText(f.text, f.x, y); ctx.restore(); }
+
+  // 湯気
+  if (S.steam > 0){
+    const k = S.steam / S.steamMax; const a = k > 0.85 ? (1 - k) / 0.15 : k < 0.35 ? k / 0.35 : 1;
+    ctx.save(); ctx.globalAlpha = 0.9 * a; ctx.fillStyle = '#f4f2ee';
+    for (let i = 0; i < 16; i++){ const t = S.t * 0.5 + i; const x = ((i * 97) % W) + Math.sin(t) * 30; const y = 90 + ((i * 131 + S.t * 40) % 560); ctx.beginPath(); ctx.arc(x, y, 90 + (i % 4) * 22, 0, 6.28); ctx.fill(); }
+    ctx.restore();
+  }
+
+  // HUD
+  ctx.save();
+  // タイマー
+  const tw = 240; ctx.fillStyle = 'rgba(90,58,38,.15)'; roundRect(16, 18, tw, 26, 13); ctx.fill();
+  const frac = S.left / GAME_SEC; ctx.fillStyle = frac < 0.17 ? '#f06a90' : '#ffb84d'; roundRect(16, 18, Math.max(26, tw * frac), 26, 13); ctx.fill();
+  ctx.fillStyle = '#5a3a26'; ctx.font = 'bold 20px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('⏱ ' + Math.ceil(S.left), 26, 38);
+  // 会計
+  ctx.fillStyle = '#fff'; roundRect(W - 196, 12, 180, 40, 20); ctx.fill(); ctx.strokeStyle = 'rgba(90,58,38,.15)'; ctx.stroke();
+  ctx.fillStyle = '#5a3a26'; ctx.font = 'bold 26px sans-serif'; ctx.textAlign = 'right'; ctx.fillText('¥' + yen(S.score), W - 30, 42);
+  ctx.font = '18px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('🧾', W - 186, 41);
+  ctx.restore();
+
+  // 終了
+  if (S.mode === 'over'){ ctx.save(); ctx.globalAlpha = Math.min(1, S.endT * 2); ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#f06a90'; ctx.font = 'bold 64px sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 8; ctx.strokeStyle = '#fff'; ctx.strokeText('おしまい！', W/2, H/2 - 40); ctx.fillText('おしまい！', W/2, H/2 - 40); ctx.restore(); }
+  if (S.mode === 'title'){ ctx.fillStyle = '#fff7ee'; ctx.fillRect(0,0,W,H); }
+  ctx.restore();
+}
+
+/* ===================== ループ ===================== */
+let last = 0;
+function loop(ts){
+  const dt = Math.min(0.05, (ts - last) / 1000 || 0.016); last = ts;
+  update(dt); draw();
+  requestAnimationFrame(loop);
+}
+
+/* ===================== デバッグフック ===================== */
+window.__game = { S, ITEMS, startGame, endGame, spawn, update, catchItem, fullClear, save, MEDAL, stackTopY, headY, dailyMissions, missionProgress, renderZukan, renderStamps, showTitle, persist };
+
+loadImages();
+})();
+</script>
+</body>
+</html>
