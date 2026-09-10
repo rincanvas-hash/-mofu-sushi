@@ -94,6 +94,10 @@
   #result .row{ margin-top:4px; }
 
   /* missions / stamps / zukan */
+  .season{ display:flex; align-items:center; gap:8px; margin:4px 0 8px; padding:6px 16px 6px 8px; border-radius:999px; background:linear-gradient(90deg,#fff3c4,#ffe0b0); color:#7a4e33; font-size:16px; font-weight:700; box-shadow:0 3px 8px rgba(180,120,40,.18); animation:seasonIn .6s cubic-bezier(.2,1.4,.4,1) both; }
+  .season img{ width:44px; height:44px; object-fit:contain; filter:drop-shadow(0 2px 2px rgba(0,0,0,.15)); }
+  .season b{ color:#d8443b; }
+  @keyframes seasonIn{ from{ transform:scale(.7); opacity:0;} to{ transform:scale(1); opacity:1;} }
   .mhead{ font-size:14px; color:#9a7a65; letter-spacing:.2em; margin-bottom:6px; }
   .mstrip{ display:flex; gap:8px; justify-content:center; margin:0 0 14px; }
   .mcell{ width:112px; background:rgba(255,255,255,.85); border-radius:16px; padding:6px 4px 4px; display:flex; flex-direction:column; align-items:center; gap:2px; font-size:16px; font-weight:700; color:#7a4e33; box-shadow:0 2px 6px rgba(0,0,0,.08); position:relative; }
@@ -102,7 +106,7 @@
   .mcell img.pl{ height:auto; }
   .mcell .ban{ position:absolute; font-size:30px; opacity:.9; }
   .mcell.done{ background:#dff5e3; color:#2f8a4a; }
-  .mcell.done::after{ content:"✓"; position:absolute; right:7px; top:2px; font-size:16px; color:#2f8a4a; }
+  .mcell.done{ box-shadow:0 0 0 2px #7fd39a inset; }
   .mcell.fail{ opacity:.5; }
   .stamps{ display:flex; gap:8px; justify-content:center; margin:12px 0 6px; }
   .stamp{ width:44px; height:44px; border-radius:50%; border:2px dashed #e0b8a0; display:flex; align-items:center; justify-content:center; font-size:22px; background:#fff; position:relative; }
@@ -152,6 +156,7 @@
       <img class="p" src="assets/plate-red.png" style="top:-12px; animation-delay:.05s" alt="">
       <img class="p" src="assets/plate-gold.png" style="top:-22px; animation-delay:.1s" alt="">
     </div>
+    <div class="season hidden" id="seasonBox"></div>
     <div class="best" id="bestBox"><span>🏆</span><span id="bestVal">¥0</span><img id="bestMedal" src="" alt="" class="hidden"></div>
     <div class="mhead" id="tMhead">🎯 きょうの ミッション</div>
     <div class="mstrip" id="tMissions"></div>
@@ -256,10 +261,10 @@ const ITEMS = {
   uni:    { img:'uni',    plate:'gold',  value:550, w:2.4 },
   pudding:{ img:'pudding',plate:'gold',  value:550, w:2.4 },
   cake:   { img:'cake',   plate:'gold',  value:550, w:2.4 },
-  tsukimi:  { img:'tsukimi',   plate:'gold', value:880, w:1.8, season:9 },    // 9月限定 月見うさぎ
-  halloween:{ img:'halloween', plate:'gold', value:880, w:1.8, season:10 },   // 10月限定
-  momiji:   { img:'momiji',    plate:'gold', value:880, w:1.8, season:11 },   // 11月限定 もみじ
-  xmas:     { img:'xmas',      plate:'gold', value:880, w:1.8, season:12 },   // 12月限定 クリスマス
+  tsukimi:  { img:'tsukimi',   plate:'gold', value:880, w:1.8, season:9,  name:'月見うさぎ寿司', emoji:'🌕' },
+  halloween:{ img:'halloween', plate:'gold', value:880, w:1.8, season:10, name:'ハロウィン寿司', emoji:'🎃' },
+  momiji:   { img:'momiji',    plate:'gold', value:880, w:1.8, season:11, name:'もみじ寿司', emoji:'🍁' },
+  xmas:     { img:'xmas',      plate:'gold', value:880, w:1.8, season:12, name:'クリスマス寿司', emoji:'🎄' },
   wasabi: { img:'wasabi', bad:'stun',    w:6 },
   teacup: { img:'teacup', bad:'steam',   w:3.5 },
   eplate: { img:'plate-empty', bad:'drop', w:5 },
@@ -403,6 +408,7 @@ function missionHTML(m, cls){
   else if (m.k === 'avoid'){ ic = `<img src="assets/${ITEMS[m.item].img}.png" alt=""><span class="ban">🚫</span>`; txt = '0'; }
   else if (m.k === 'full'){ ic = '<span style="font-size:30px">🍽️</span>'; txt = '24まい'; }
   else if (m.k === 'item'){ ic = `<img src="assets/${ITEMS[m.item].img}.png" alt="">`; txt = '×' + m.n; }
+  if (cls === 'done') txt = '✓ 達成！';
   return `<div class="mcell ${cls}"><div class="ic">${ic}</div><div>${txt}</div></div>`;
 }
 function drawMissions(){
@@ -416,7 +422,7 @@ function drawMissions(){
     else if (m.k === 'avoid'){ drawImg(ITEMS[m.item].img, x + 22, y + h/2, 30, 30); ctx.font = '18px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('🚫', x + 22, y + 23); label = p.cur === 0 ? '0' : '✗'; }
     else if (m.k === 'full'){ ctx.font = '18px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('🍽️', x + 10, y + 23); label = `24  ${p.cur}/${m.n}`; }
     else if (m.k === 'item'){ drawImg(ITEMS[m.item].img, x + 22, y + h/2, 30, 30); label = `${p.cur}/${m.n}`; }
-    ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'left'; ctx.fillStyle = p.done ? '#2f8a4a' : '#5a3a26'; ctx.fillText((p.done ? '✓ ' : '') + label, x + 44, y + 22);
+    ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'left'; ctx.fillStyle = p.done ? '#2f8a4a' : '#5a3a26'; ctx.fillText(p.done ? '✓ 達成！' : label, x + 44, y + 22);
   });
 }
 
@@ -445,6 +451,8 @@ function showTitle(){
   const m = medalFor(save.best); const bm = $('bestMedal');
   if (m) { bm.src = `assets/medal-${m}.png`; bm.classList.remove('hidden'); } else bm.classList.add('hidden');
   $('soundBtn').textContent = save.sound ? '🔊' : '🔇';
+  const sm = seasonMonth(); const sk = Object.keys(ITEMS).find(k => ITEMS[k].season === sm); const sb = $('seasonBox');
+  if (sk){ const it = ITEMS[sk]; sb.innerHTML = `<img src="assets/${it.img}.png" alt=""><span>${it.emoji} ${sm}月限定 <b>${it.name}</b> 登場中！</span>`; sb.classList.remove('hidden'); } else sb.classList.add('hidden');
   const day = dayRec(todayKey()); const ms = dailyMissions();
   $('tMissions').innerHTML = ms.map((m, i) => missionHTML(m, day.m[i] ? 'done' : '')).join('');
   $('tMhead').textContent = day.m.every(Boolean) ? '🎯 きょうの ミッション ✓ かんぺき！' : '🎯 きょうの ミッション';
