@@ -468,7 +468,7 @@ function renderStamps(){
   for (let i = 0; i < 7; i++){ const d = days[i]; const on = !!d; const star = on && save.days[d] && save.days[d].m.every(Boolean);
     html += `<div class="stamp ${on ? 'on' : ''} ${d === dk ? 'today' : ''}">${on ? '🐾' : (i === 6 ? '🏮' : '')}${star ? '<span class="st">⭐</span>' : ''}</div>`; }
   $('stampRow').innerHTML = html;
-  $('stampInfo').innerHTML = (save.cards ? `🏮 ×${save.cards}　` : '') + (save.nightBg ? '夜のお寿司屋さん ✓（タイトルの🏮で切りかえ）' : 'あと ' + (7 - days.length) + ' で ごほうび🏮');
+  $('stampInfo').innerHTML = (save.cards ? `🏮 ×${save.cards}　` : '') + (save.nightBg ? '夜のお寿司屋さん ✓（タイトルの☀️/🏮で昼夜を切りかえ）' : 'あと ' + (7 - days.length) + ' で ごほうび🏮');
 }
 
 /* ===================== 画面遷移 ===================== */
@@ -484,7 +484,7 @@ function showTitle(){
   const day = dayRec(todayKey()); const ms = dailyMissions();
   $('tMissions').innerHTML = ms.map((m, i) => missionHTML(m, day.m[i] ? 'done' : '')).join('');
   $('tMhead').textContent = day.m.every(Boolean) ? '🎯 きょうの ミッション ✓ かんぺき！' : '🎯 きょうの ミッション';
-  $('bgBtn').classList.toggle('hidden', !save.nightBg); $('bgBtn').textContent = save.bg === 'night' ? '☀️' : '🏮';
+  $('bgBtn').classList.toggle('hidden', !save.nightBg); $('bgBtn').textContent = save.bg === 'night' ? '🏮' : '☀️';
 }
 function startGame(){
   Object.assign(S, { mode:'play', t:0, left:GAME_SEC, score:0, plates:[], items:[], effects:[], floats:[], flyPlates:[],
@@ -560,7 +560,7 @@ $('zukan').addEventListener('click', e => { if (e.target === $('zukan')) $('zuka
 $('stampBtn').onclick = () => { SFX.tick(); renderStamps(); $('stamps').classList.remove('hidden'); };
 $('stampsClose').onclick = () => { SFX.tick(); $('stamps').classList.add('hidden'); };
 $('stamps').addEventListener('click', e => { if (e.target === $('stamps')) $('stamps').classList.add('hidden'); });
-$('bgBtn').onclick = () => { save.bg = save.bg === 'night' ? 'day' : 'night'; persist(); $('bgBtn').textContent = save.bg === 'night' ? '☀️' : '🏮'; SFX.tick(); };
+$('bgBtn').onclick = () => { save.bg = save.bg === 'night' ? 'day' : 'night'; persist(); $('bgBtn').textContent = save.bg === 'night' ? '🏮' : '☀️'; SFX.tick(); };
 $('soundBtn').onclick = () => { save.sound = !save.sound; persist(); $('soundBtn').textContent = save.sound ? '🔊' : '🔇'; SFX.tick(); };
 $('shareBtn').onclick = async () => {
   const text = `🍣 もふもふ寿司キャッチ\n🧾 ¥${yen(S.score)}（${S.counts.white + S.counts.red + S.counts.gold}皿）\n#もふもふの丘`;
