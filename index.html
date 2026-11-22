@@ -379,7 +379,7 @@ const S = {
   flyPlates: [],         // 落ちる/飛ぶ皿
   sway: 0, swayV: 0, wobble: 0, wobbleT: 0,
   steam: 0, steamMax: 0,
-  spawnT: 0, burst: 0, burstT: 0, burstsDone: 0,
+  spawnT: 0, burst: 0, burstT: 0, burstsDone: 0, carriers: [],
   counts: { white:0, red:0, gold:0, full:0 },
   types: {}, bad: {}, missions: [],
   caught: 0, missed: 0,
@@ -488,7 +488,7 @@ function showTitle(){
 }
 function startGame(){
   Object.assign(S, { mode:'play', t:0, left:GAME_SEC, score:0, plates:[], items:[], effects:[], floats:[], flyPlates:[],
-    sway:0, swayV:0, wobble:0, wobbleT:0, steam:0, steamMax:0, spawnT:0.6, burst:0, burstT:0, burstsDone:0,
+    sway:0, swayV:0, wobble:0, wobbleT:0, steam:0, steamMax:0, spawnT:0.6, burst:0, burstT:0, burstsDone:0, carriers:[],
     counts:{ white:0, red:0, gold:0, full:0 }, types:{}, bad:{}, missions: dailyMissions(), caught:0, missed:0, endT:0, shake:0 });
   S.mofu = { x: W/2, tx: W/2, vx: 0, stun: 0, face: 0 };
   $('title').classList.add('hidden'); $('result').classList.add('hidden'); $('help').classList.add('hidden');
@@ -624,12 +624,18 @@ function update(dt){
   if (S.shake > 0) S.shake = Math.max(0, S.shake - dt * 3);
 
   // --- 出現
-  if (S.burst > 0){ S.burstT -= dt; if (S.burstT <= 0){ spawn(pickType()); S.burst--; S.burstT = 0.22; } }
+  // 大盤振る舞い中は、レーンのちびモフがお寿司を運んできて落とす
+  for (const c of S.carriers){
+    c.x += 230 * dt; if (c.hop > 0) c.hop = Math.max(0, c.hop - dt * 4);
+    if (c.type && c.x >= c.dropX){ const o = spawn(c.type, c.dropX); o.y = LANE_Y + 14; o.scale = 0.55; c.type = null; c.hop = 1; S.burst = Math.max(0, S.burst - 1); }
+  }
+  if (S.carriers.length && S.carriers.every(c => c.x > W + 50)) S.carriers = [];
+  if (S.burst > 0){ if (!S.carriers.some(c => c.type)) S.burst = 0; }
   else {
     S.spawnT -= dt;
     if (S.spawnT <= 0){ spawn(pickType()); const d = difficulty(); S.spawnT = (1.05 - 0.5 * d) * (0.75 + Math.random() * 0.5); }
     // 大盤振る舞いタイム(25秒・47秒)
-    const bursts = [25, 47]; if (S.burstsDone < bursts.length && S.t >= bursts[S.burstsDone]){ S.burstsDone++; S.burst = 7; S.burstT = 0; SFX.burst(); addFloat(W/2, 300, '🍣 ✨ 🍣', '#f06a90', 34); }
+    const bursts = [25, 47]; if (S.burstsDone < bursts.length && S.t >= bursts[S.burstsDone]){ S.burstsDone++; S.burst = 7; S.burstT = 0; S.carriers = []; for (let i = 0; i < 7; i++) S.carriers.push({ x: -44 - i * 84, dropX: 60 + Math.random() * (W - 120), type: pickType(), hop: 0 }); SFX.burst(); addFloat(W/2, 300, '🍣 ✨ 🍣', '#f06a90', 34); }
   }
 
   // --- 落下物
@@ -740,6 +746,13 @@ function draw(){
   ctx.fillStyle = 'rgba(255,255,255,.08)'; ctx.fillRect(-10, LANE_Y, W+20, 6);
   // きょうのミッション(進捗)
   if (S.mode === 'play' || S.mode === 'over') drawMissions();
+  // レーンのちびモフ(大盤振る舞い)
+  for (const c of S.carriers){
+    const cs = 66, fy = LANE_Y + LANE_H + 16, by = fy - Math.abs(Math.sin(c.x * 0.05)) * 4 - Math.sin(c.hop * 3.14) * 10;
+    ctx.save(); ctx.globalAlpha = 0.18; ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(c.x, fy - 2, cs * 0.34, 5, 0, 0, 6.28); ctx.fill(); ctx.restore();
+    const im = IMG.mofu; if (im.naturalWidth) ctx.drawImage(im, c.x - cs/2, by - cs, cs, cs);
+    if (c.type) drawImg(ITEMS[c.type].img, c.x, by - cs + 2, 48, 48);
+  }
 
   // 落下物
   for (const o of S.items){
